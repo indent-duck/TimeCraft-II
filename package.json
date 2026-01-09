@@ -1,0 +1,16 @@
+{
+  "name": "timecraft-mern",
+  "version": "1.0.0",
+  "description": "TimeCraft MERN Stack with Expo",
+  "scripts": {
+    "install-client": "cd client && npm install",
+    "install-server": "cd server && npm install",
+    "install-all": "npm run install-client && npm run install-server",
+    "client": "cd client && npx expo start",
+    "server": "cd server && npm run dev",
+    "dev": "concurrently \"npm run server\" \"npm run client\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
