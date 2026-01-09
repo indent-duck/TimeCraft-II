@@ -5,7 +5,8 @@ import axios from 'axios';
 import { useTheme } from '../../ThemeContext';
 import Sidebar from '../../components/Sidebar';
 
-const API_URL = 'http://localhost:3001/api';
+//const API_URL = 'http://localhost:3001/api';
+const API_URL = 'http://192.168.1.101:3001/api';
 
 export default function Dashboard() {
   const { theme } = useTheme();

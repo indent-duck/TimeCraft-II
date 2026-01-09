@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView, Modal, TextInput } from 'react-native';
 
-const API_URL = 'http://localhost:3001/api';
+const API_URL = 'http://192.168.1.101:3001/api';
 
 export default function Schedule() {
   const [isEditing, setIsEditing] = useState(false);
