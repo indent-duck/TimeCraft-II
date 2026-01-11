@@ -6,9 +6,9 @@ import { useTheme } from '../../ThemeContext';
 import Sidebar from '../../components/Sidebar';
 
 //const API_URL = 'http://localhost:3001/api';
-const API_URL = 'http://192.168.1.101:3001/api';
+const API_URL = 'http://192.168.1.14:3001/api';
 
-export default function Dashboard() {
+export default function Dashboard({ navigation }) {
   const { theme } = useTheme();
   const [tasks, setTasks] = useState([]);
   const [newTask, setNewTask] = useState('');
@@ -49,6 +49,11 @@ export default function Dashboard() {
     } catch (error) {
       console.log('Error updating task:', error.message);
     }
+  };
+
+  const handleNavigateToNote = (params) => {
+    navigation.navigate('Notes', params);
+    setSidebarVisible(false);
   };
 
   const renderTask = ({ item }) => (
@@ -111,7 +116,8 @@ export default function Dashboard() {
 
       <Sidebar 
         visible={sidebarVisible} 
-        onClose={() => setSidebarVisible(false)} 
+        onClose={() => setSidebarVisible(false)}
+        onNavigateToNote={handleNavigateToNote}
       />
     </SafeAreaView>
   );
