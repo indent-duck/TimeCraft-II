@@ -5,7 +5,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import axios from 'axios';
 import { useTheme } from '../ThemeContext';
 
-const API_URL = 'http://192.168.1.14:3001/api';
+const API_URL = 'http://192.168.1.100:3001/api';
 
 export default function DashboardWidgets() {
   const { theme } = useTheme();

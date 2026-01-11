@@ -14,7 +14,7 @@ import TimePicker from '../components/TimePicker';
 import NotificationService from '../../services/NotificationService';
 
 // switch url depending on environment
-const API_URL = "http://192.168.1.14:3001/api";
+const API_URL = "http://192.168.1.100:3001/api";
 
 // const API_URL = "http://localhost:3001/api";
 

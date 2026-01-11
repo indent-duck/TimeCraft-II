@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import axios from 'axios';
 
-const API_URL = 'http://192.168.1.14:3001/api';
+const API_URL = 'http://192.168.1.100:3001/api';
 
 export default function Reminders() {
   const [reminders, setReminders] = useState([]);

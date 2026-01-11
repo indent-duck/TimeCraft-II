@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 
 //const API_URL = 'http://localhost:3001/api';
-const API_URL = 'http://192.168.1.14:3001/api';
+const API_URL = 'http://192.168.1.100:3001/api';
 
 export default function Sidebar({ visible, onClose, onNavigateToNote }) {
   const slideAnim = useRef(new Animated.Value(-250)).current;

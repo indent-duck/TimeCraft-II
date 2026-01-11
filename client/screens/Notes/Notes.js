@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
 
-const API_URL = "http://192.168.1.14:3001/api";
+const API_URL = "http://192.168.1.100:3001/api";
 
 export default function Notes({ route, navigation }) {
   const { subjectName, noteTitle, isNewNote } = route.params || {};
