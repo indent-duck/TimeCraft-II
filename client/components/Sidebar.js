@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, Animated, FlatList } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, Animated, FlatList, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 
@@ -57,6 +57,28 @@ export default function Sidebar({ visible, onClose, onNavigateToNote }) {
     onClose();
   };
 
+  const deleteNote = async (noteId, noteTitle) => {
+    Alert.alert(
+      'Delete Note',
+      `Are you sure you want to delete "${noteTitle}"?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await axios.delete(`${API_URL}/notes/${noteId}`);
+              setNotes(notes.filter(note => note._id !== noteId));
+            } catch (error) {
+              console.log('Error deleting note:', error.message);
+            }
+          }
+        }
+      ]
+    );
+  };
+
   const renderSubject = ({ item }) => (
     <TouchableOpacity 
       style={styles.subjectItem}
@@ -68,15 +90,23 @@ export default function Sidebar({ visible, onClose, onNavigateToNote }) {
   );
 
   const renderNote = ({ item }) => (
-    <TouchableOpacity 
-      style={styles.noteItem}
-      onPress={() => handleNotePress(item)}
-    >
-      <Text style={styles.noteTitle}>{item.title}</Text>
-      <Text style={styles.notePreview} numberOfLines={2}>
-        {item.content || 'No content'}
-      </Text>
-    </TouchableOpacity>
+    <View style={styles.noteItem}>
+      <TouchableOpacity 
+        style={styles.noteContent}
+        onPress={() => handleNotePress(item)}
+      >
+        <Text style={styles.noteTitle}>{item.title}</Text>
+        <Text style={styles.notePreview} numberOfLines={2}>
+          {item.content || 'No content'}
+        </Text>
+      </TouchableOpacity>
+      <TouchableOpacity 
+        style={styles.deleteButton}
+        onPress={() => deleteNote(item._id, item.title)}
+      >
+        <Ionicons name="trash" size={16} color="#ff4444" />
+      </TouchableOpacity>
+    </View>
   );
 
   return (
@@ -177,10 +207,19 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   noteItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingVertical: 10,
     paddingHorizontal: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
+  },
+  noteContent: {
+    flex: 1,
+  },
+  deleteButton: {
+    padding: 5,
+    marginLeft: 10,
   },
   noteTitle: {
     fontSize: 14,
