@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../ThemeContext';
 import Sidebar from '../../components/Sidebar';
@@ -33,7 +33,10 @@ export default function Dashboard({ navigation }) {
         >
           <Ionicons name="menu" size={24} color="white" />
         </TouchableOpacity>
-        <Text style={styles.title}>TimeCraft Dashboard</Text>
+        <View style={styles.titleContainer}>
+          <Image source={require('../../assets/logo.png')} style={styles.logo} />
+          <Text style={styles.title}>TimeCraft</Text>
+        </View>
         <View style={styles.placeholder} />
       </View>
       
@@ -61,11 +64,20 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 30,
   },
+  titleContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logo: {
+    width: 48,
+    height: 48,
+    marginRight: 10,
+  },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    flex: 1,
-    textAlign: 'center',
   },
   placeholder: {
     width: 40,
