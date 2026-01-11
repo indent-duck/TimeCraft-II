@@ -22,8 +22,8 @@ const API_URL = "http://192.168.1.14:3001/api";
 
 export default function Schedule({ navigation }) {
   const colorPalette = [
-    '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
-    '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9'
+    '#FF4444', '#00AA00', '#0066FF', '#FF8800', '#8800FF',
+    '#FF0088', '#00FFAA', '#FFAA00', '#AA0088', '#0088FF'
   ];
   
   const [isEditing, setIsEditing] = useState(false);
@@ -75,6 +75,8 @@ export default function Schedule({ navigation }) {
       
       // Build subject colors map first
       const newSubjectColors = {...subjectColors};
+      const usedColors = new Set(Object.values(newSubjectColors));
+      let colorIndex = 0;
       
       // Assign colors to existing classes that don't have them
       const updatedClasses = data.map(cls => {
@@ -83,8 +85,14 @@ export default function Schedule({ navigation }) {
           let subjectColor = newSubjectColors[subjectKey];
           
           if (!subjectColor) {
-            subjectColor = colorPalette[Math.floor(Math.random() * colorPalette.length)];
+            // Find next available color
+            while (usedColors.has(colorPalette[colorIndex % colorPalette.length])) {
+              colorIndex++;
+            }
+            subjectColor = colorPalette[colorIndex % colorPalette.length];
+            usedColors.add(subjectColor);
             newSubjectColors[subjectKey] = subjectColor;
+            colorIndex++;
           }
           
           return { ...cls, color: subjectColor };
@@ -188,7 +196,12 @@ export default function Schedule({ navigation }) {
     let subjectColor = subjectColors[subjectKey];
     
     if (!subjectColor) {
-      subjectColor = colorPalette[Math.floor(Math.random() * colorPalette.length)];
+      const usedColors = new Set(Object.values(subjectColors));
+      let colorIndex = 0;
+      while (usedColors.has(colorPalette[colorIndex % colorPalette.length])) {
+        colorIndex++;
+      }
+      subjectColor = colorPalette[colorIndex % colorPalette.length];
       setSubjectColors(prev => ({...prev, [subjectKey]: subjectColor}));
     }
     
