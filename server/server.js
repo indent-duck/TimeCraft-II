@@ -22,6 +22,7 @@ app.use('/api/tasks', require('./routes/tasks'));
 app.use('/api/schedule', require('./routes/schedule'));
 app.use('/api/notes', require('./routes/notes'));
 app.use('/api/reminders', require('./routes/reminders'));
+app.use('/api/dashboard', require('./routes/dashboard'));
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);

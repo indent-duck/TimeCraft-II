@@ -7,6 +7,7 @@ import { StatusBar } from 'expo-status-bar';
 import { Dashboard, Schedule, Reminders, Settings, Notes } from './screens';
 import { ThemeProvider, useTheme } from './ThemeContext';
 import NotificationService from './services/NotificationService';
+import LoadingScreen from './components/LoadingScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -86,10 +87,21 @@ function AppNavigator() {
 }
 
 export default function App() {
+  const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
     // Request notification permissions on app startup
     NotificationService.requestPermissions();
+    
+    // Hide loading screen after 2 seconds
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 2000);
   }, []);
+
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
 
   return (
     <ThemeProvider>

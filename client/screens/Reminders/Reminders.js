@@ -49,7 +49,8 @@ export default function Reminders() {
   const renderReminder = ({ item }) => (
     <View style={styles.reminderCard}>
       <View style={styles.reminderContent}>
-        <Text style={styles.reminderTitle}>{item.title}</Text>
+        <Text style={styles.reminderTitle}>{item.subject || item.title}</Text>
+        {item.subject && <Text style={styles.reminderSubject}>{item.title}</Text>}
         <Text style={styles.reminderDate}>Deadline: {new Date(item.deadlineDate).toLocaleDateString()} at {item.deadlineTime}</Text>
         <Text style={styles.reminderTime}>Reminder: {item.reminderTime}</Text>
         {item.reminderDays.length > 0 && (
@@ -124,6 +125,12 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 5,
+  },
+  reminderSubject: {
+    fontSize: 16,
+    color: '#555',
+    marginBottom: 5,
+    fontStyle: 'italic',
   },
   reminderDate: {
     fontSize: 14,

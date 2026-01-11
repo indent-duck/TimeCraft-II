@@ -36,7 +36,8 @@ export default function Schedule({ navigation }) {
     deadlineTime: "",
     reminderDays: [],
     reminderTime: "",
-    notificationIds: []
+    notificationIds: [],
+    subjectName: ""
   });
   const [reminderError, setReminderError] = useState("");
   const [formData, setFormData] = useState({
@@ -265,7 +266,8 @@ export default function Schedule({ navigation }) {
         deadlineTime: reminderData.deadlineTime,
         reminderDays: reminderData.reminderDays,
         reminderTime: reminderData.reminderTime,
-        notificationIds: notificationIds
+        notificationIds: notificationIds,
+        subject: reminderData.subjectName
       };
 
       const response = await fetch(`${API_URL}/reminders`, {
@@ -291,7 +293,8 @@ export default function Schedule({ navigation }) {
       deadlineTime: "",
       reminderDays: [],
       reminderTime: "",
-      notificationIds: []
+      notificationIds: [],
+      subjectName: ""
     });
     setShowReminderModal(false);
     setReminderError("");
@@ -697,6 +700,7 @@ export default function Schedule({ navigation }) {
                   ]}
                   onPress={() => {
                     setShowCellModal(false);
+                    setReminderData(prev => ({...prev, subjectName: selectedClass.subjectName}));
                     setShowReminderModal(true);
                   }}
                 >
@@ -859,7 +863,7 @@ export default function Schedule({ navigation }) {
                 style={styles.modalCancelButton}
                 onPress={() => {
                   setShowReminderModal(false);
-                  setReminderData({title: "", deadlineDate: null, deadlineTime: "", reminderDays: [], reminderTime: ""});
+                  setReminderData({title: "", deadlineDate: null, deadlineTime: "", reminderDays: [], reminderTime: "", notificationIds: [], subjectName: ""});
                   setReminderError("");
                 }}
               >

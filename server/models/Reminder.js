@@ -5,6 +5,10 @@ const reminderSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  subject: {
+    type: String,
+    required: false
+  },
   deadlineDate: {
     type: Date,
     required: true
