@@ -31,10 +31,13 @@ class NotificationService {
   async requestPermissions() {
     if (Platform.OS === 'android') {
       await Notifications.setNotificationChannelAsync('default', {
-        name: 'default',
+        name: 'TimeCraft Reminders',
         importance: Notifications.AndroidImportance.MAX,
         vibrationPattern: [0, 250, 250, 250],
-        lightColor: '#FF231F7C',
+        lightColor: '#007AFF',
+        sound: 'default',
+        enableVibrate: true,
+        showBadge: true,
       });
     }
 
@@ -82,6 +85,8 @@ class NotificationService {
           body: body,
           sound: 'default',
           priority: Notifications.AndroidNotificationPriority.HIGH,
+          icon: './assets/icon.png',
+          color: '#007AFF',
         },
         trigger: {
           type: 'date',

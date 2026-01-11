@@ -18,7 +18,14 @@ const API_URL = "http://192.168.1.14:3001/api";
 
 // const API_URL = "http://localhost:3001/api";
 
+// const API_URL = "http://localhost:3001/api";
+
 export default function Schedule({ navigation }) {
+  const colorPalette = [
+    '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
+    '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9'
+  ];
+  
   const [isEditing, setIsEditing] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -30,6 +37,7 @@ export default function Schedule({ navigation }) {
   const [errorMessage, setErrorMessage] = useState("");
   const [classes, setClasses] = useState([]);
   const [showReminderModal, setShowReminderModal] = useState(false);
+  const [subjectColors, setSubjectColors] = useState({});
   const [reminderData, setReminderData] = useState({
     title: "",
     deadlineDate: null,
@@ -64,8 +72,29 @@ export default function Schedule({ navigation }) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
-      setClasses(data);
-      setOriginalClasses(data);
+      
+      // Build subject colors map first
+      const newSubjectColors = {...subjectColors};
+      
+      // Assign colors to existing classes that don't have them
+      const updatedClasses = data.map(cls => {
+        if (!cls.color) {
+          const subjectKey = cls.subjectName;
+          let subjectColor = newSubjectColors[subjectKey];
+          
+          if (!subjectColor) {
+            subjectColor = colorPalette[Math.floor(Math.random() * colorPalette.length)];
+            newSubjectColors[subjectKey] = subjectColor;
+          }
+          
+          return { ...cls, color: subjectColor };
+        }
+        return cls;
+      });
+      
+      setSubjectColors(newSubjectColors);
+      setClasses(updatedClasses);
+      setOriginalClasses(updatedClasses);
     } catch (error) {
       console.error("Error loading schedule:", error);
       setErrorMessage("Failed to connect to server. Check your network connection.");
@@ -155,12 +184,21 @@ export default function Schedule({ navigation }) {
       }
     }
 
+    const subjectKey = formData.subjectName.toUpperCase();
+    let subjectColor = subjectColors[subjectKey];
+    
+    if (!subjectColor) {
+      subjectColor = colorPalette[Math.floor(Math.random() * colorPalette.length)];
+      setSubjectColors(prev => ({...prev, [subjectKey]: subjectColor}));
+    }
+    
     const classData = {
       ...formData,
-      subjectName: formData.subjectName.toUpperCase(),
+      subjectName: subjectKey,
       instructor: formData.instructor.toUpperCase(),
       timeSlots: timeSlots.slice(startIndex, endIndex),
       roomPrefix: formData.isLecture ? "ITC" : "CCL",
+      color: subjectColor,
     };
 
     try {
@@ -183,10 +221,13 @@ export default function Schedule({ navigation }) {
 
       const savedClass = await response.json();
       
+      // Ensure the saved class has the color property
+      const classWithColor = { ...savedClass, color: subjectColor };
+      
       if (editingClass) {
-        setClasses(classes.map((cls) => cls._id === editingClass._id ? savedClass : cls));
+        setClasses(classes.map((cls) => cls._id === editingClass._id ? classWithColor : cls));
       } else {
-        setClasses([...classes, savedClass]);
+        setClasses([...classes, classWithColor]);
       }
 
       setFormData({
@@ -425,9 +466,9 @@ export default function Schedule({ navigation }) {
                   key={dayIndex}
                   style={[
                     styles.timeCell,
-                    classData && styles.occupiedCell,
-                    isFirst && styles.firstSlot,
-                    isLast && styles.lastSlot,
+                    classData && [styles.occupiedCell, { backgroundColor: classData.color + '40' }],
+                    isFirst && [styles.firstSlot, classData && { borderTopColor: classData.color }],
+                    isLast && [styles.lastSlot, classData && { borderBottomColor: classData.color }],
                   ]}
                   onPress={() => handleCellPress(classData)}
                   disabled={!classData}

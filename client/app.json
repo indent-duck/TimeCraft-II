@@ -40,7 +40,9 @@
         "expo-notifications",
         {
           "icon": "./assets/icon.png",
-          "color": "#ffffff"
+          "color": "#007AFF",
+          "sounds": ["./assets/notification.wav"],
+          "mode": "production"
         }
       ],
       "@react-native-community/datetimepicker"
