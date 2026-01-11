@@ -19,7 +19,7 @@ export default function TimePicker({ selectedTime, onTimeSelect }) {
       <View style={styles.timeContainer}>
         <View style={styles.scrollContainer}>
           <Text style={styles.label}>Hour</Text>
-          <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+          <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false} nestedScrollEnabled={true}>
             {hours.map((h) => (
               <TouchableOpacity
                 key={h}
@@ -37,7 +37,7 @@ export default function TimePicker({ selectedTime, onTimeSelect }) {
 
         <View style={styles.scrollContainer}>
           <Text style={styles.label}>Min</Text>
-          <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+          <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false} nestedScrollEnabled={true}>
             {minutes.map((m) => (
               <TouchableOpacity
                 key={m}

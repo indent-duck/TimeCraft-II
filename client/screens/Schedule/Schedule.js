@@ -836,7 +836,7 @@ export default function Schedule({ navigation }) {
               </View>
             ) : null}
             
-            <ScrollView style={styles.modalScrollView}>
+            <ScrollView style={styles.modalScrollView} nestedScrollEnabled={true}>
               <TextInput
                 style={styles.input}
                 placeholder="Reminder Title"
