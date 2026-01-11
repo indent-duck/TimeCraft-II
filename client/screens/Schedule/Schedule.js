@@ -273,6 +273,16 @@ export default function Schedule({ navigation }) {
       return;
     }
 
+    // Check if deadline is in the past
+    const deadlineDateTime = new Date(reminderData.deadlineDate);
+    const [hours, minutes] = reminderData.deadlineTime.split(':');
+    deadlineDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+    
+    if (deadlineDateTime <= new Date()) {
+      setReminderError("Deadline must be in the future");
+      return;
+    }
+
     const notificationIds = [];
     
     for (const day of reminderData.reminderDays) {
@@ -292,16 +302,44 @@ export default function Schedule({ navigation }) {
       triggerDate.setDate(triggerDate.getDate() + daysUntil);
       triggerDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
       
-      console.log(`Scheduling notification for ${day} at ${reminderData.reminderTime}, trigger date: ${triggerDate}`);
+      // If deadline is in the future and trigger date is before deadline, schedule it
+      const deadlineDateTime = new Date(reminderData.deadlineDate);
+      if (triggerDate < deadlineDateTime) {
+        // Schedule weekly reminders until deadline
+        let currentTrigger = new Date(triggerDate);
+        while (currentTrigger < deadlineDateTime) {
+          const notificationId = await NotificationService.scheduleReminderNotification(
+            reminderData.title,
+            `Reminder: ${reminderData.title} - Due ${reminderData.deadlineDate.toDateString()} at ${reminderData.deadlineTime}`,
+            new Date(currentTrigger)
+          );
+          
+          if (notificationId) {
+            notificationIds.push(notificationId);
+          }
+          
+          currentTrigger.setDate(currentTrigger.getDate() + 7);
+        }
+        continue;
+      }
       
-      const notificationId = await NotificationService.scheduleReminderNotification(
-        reminderData.title,
-        `Reminder: ${reminderData.title} - Due ${reminderData.deadlineDate.toDateString()} at ${reminderData.deadlineTime}`,
-        triggerDate
-      );
+      // If deadline is in the future, schedule reminders for each week until deadline
+      const deadlineDate = new Date(reminderData.deadlineDate);
+      const currentTrigger = new Date(triggerDate);
       
-      if (notificationId) {
-        notificationIds.push(notificationId);
+      while (currentTrigger <= deadlineDate) {
+        if (currentTrigger > new Date()) { // Only schedule future notifications
+          const notificationId = await NotificationService.scheduleReminderNotification(
+            reminderData.title,
+            `Reminder: ${reminderData.title} - Due ${reminderData.deadlineDate.toDateString()} at ${reminderData.deadlineTime}`,
+            new Date(currentTrigger)
+          );
+          
+          if (notificationId) {
+            notificationIds.push(notificationId);
+          }
+        }
+        currentTrigger.setDate(currentTrigger.getDate() + 7); // Next week
       }
     }
     

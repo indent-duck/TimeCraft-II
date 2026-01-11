@@ -64,6 +64,9 @@ export default function DashboardWidgets() {
         <Text style={styles.className}>{dashboardData.nextClass?.name || 'No upcoming class'}</Text>
         <Text style={styles.classDetails}>{dashboardData.nextClass?.time || ''}</Text>
         <Text style={styles.classDetails}>{dashboardData.nextClass?.room || ''}</Text>
+        {dashboardData.nextClass?.day && dashboardData.nextClass.day !== new Date().toLocaleDateString('en-US', { weekday: 'long' }) && (
+          <Text style={styles.classDay}>{dashboardData.nextClass.day}</Text>
+        )}
       </View>
 
       <View style={[styles.widget, dynamicStyles.widget]}>
@@ -116,6 +119,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
     marginBottom: 2,
+  },
+  classDay: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#007AFF',
+    marginTop: 4,
   },
   reminder: {
     fontSize: 16,
