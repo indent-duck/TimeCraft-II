@@ -85,7 +85,7 @@ class NotificationService {
           body: body,
           sound: 'default',
           priority: Notifications.AndroidNotificationPriority.HIGH,
-          icon: './assets/icon.png',
+          icon: './assets/logo.png',
           color: '#007AFF',
         },
         trigger: {

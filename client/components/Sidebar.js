@@ -1,10 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, Animated, FlatList, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import axios from 'axios';
-
-//const API_URL = 'http://localhost:3001/api';
-const API_URL = 'http://192.168.1.14:3001/api';
+import StorageService from '../services/StorageService';
 
 export default function Sidebar({ visible, onClose, onNavigateToNote }) {
   const slideAnim = useRef(new Animated.Value(-250)).current;
@@ -31,8 +28,9 @@ export default function Sidebar({ visible, onClose, onNavigateToNote }) {
 
   const fetchSubjects = async () => {
     try {
-      const response = await axios.get(`${API_URL}/notes`);
-      setSubjects(response.data);
+      const notes = await StorageService.getNotes();
+      const uniqueSubjects = [...new Set(notes.map(note => note.subjectName))];
+      setSubjects(uniqueSubjects);
     } catch (error) {
       console.log('Error fetching subjects:', error.message);
     }
@@ -40,8 +38,9 @@ export default function Sidebar({ visible, onClose, onNavigateToNote }) {
 
   const fetchNotesForSubject = async (subjectName) => {
     try {
-      const response = await axios.get(`${API_URL}/notes/subject/${encodeURIComponent(subjectName)}`);
-      setNotes(response.data);
+      const allNotes = await StorageService.getNotes();
+      const subjectNotes = allNotes.filter(note => note.subjectName === subjectName);
+      setNotes(subjectNotes);
       setSelectedSubject(subjectName);
     } catch (error) {
       console.log('Error fetching notes:', error.message);
@@ -68,8 +67,10 @@ export default function Sidebar({ visible, onClose, onNavigateToNote }) {
           style: 'destructive',
           onPress: async () => {
             try {
-              await axios.delete(`${API_URL}/notes/${noteId}`);
-              setNotes(notes.filter(note => note._id !== noteId));
+              const success = await StorageService.deleteNote(noteId);
+              if (success) {
+                setNotes(notes.filter(note => note._id !== noteId));
+              }
             } catch (error) {
               console.log('Error deleting note:', error.message);
             }

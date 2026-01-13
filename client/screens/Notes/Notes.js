@@ -9,8 +9,7 @@ import {
   Alert,
 } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
-
-const API_URL = "http://192.168.1.14:3001/api";
+import StorageService from '../../services/StorageService';
 
 export default function Notes({ route, navigation }) {
   const { subjectName, noteTitle, isNewNote } = route.params || {};
@@ -27,9 +26,8 @@ export default function Notes({ route, navigation }) {
 
   const loadNote = async () => {
     try {
-      const response = await fetch(`${API_URL}/notes/${encodeURIComponent(subjectName)}/${encodeURIComponent(noteTitle)}`);
-      if (response.ok) {
-        const data = await response.json();
+      const data = await StorageService.getNote(subjectName, noteTitle);
+      if (data) {
         setCurrentNoteTitle(data.title || "");
         setNoteContent(data.content || "");
         setOriginalTitle(data.title || "");
@@ -47,38 +45,21 @@ export default function Notes({ route, navigation }) {
     }
     
     try {
-      console.log('Saving note:', { subjectName, title: currentNoteTitle.trim() || "Untitled", content: noteContent });
+      const noteData = {
+        subjectName,
+        title: currentNoteTitle.trim() || "Untitled",
+        content: noteContent,
+      };
       
-      const response = await fetch(`${API_URL}/notes`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          subjectName,
-          title: currentNoteTitle.trim() || "Untitled",
-          content: noteContent,
-        }),
-      });
-
-      console.log('Response status:', response.status);
-      
-      if (response.ok) {
-        const savedNote = await response.json();
-        console.log('Note saved:', savedNote);
-        setOriginalTitle(currentNoteTitle);
-        setOriginalContent(noteContent);
-        Alert.alert("Success", "Note saved successfully!", [
-          { text: "OK", onPress: () => navigation.goBack() }
-        ]);
-      } else {
-        const errorText = await response.text();
-        console.error('Save failed:', response.status, errorText);
-        Alert.alert("Error", `Failed to save note: ${response.status}`);
-      }
+      await StorageService.saveNote(noteData);
+      setOriginalTitle(currentNoteTitle);
+      setOriginalContent(noteContent);
+      Alert.alert("Success", "Note saved successfully!", [
+        { text: "OK", onPress: () => navigation.goBack() }
+      ]);
     } catch (error) {
       console.error("Error saving note:", error);
-      Alert.alert("Error", `Network error: ${error.message}`);
+      Alert.alert("Error", `Failed to save note: ${error.message}`);
     }
   };
 
@@ -113,6 +94,7 @@ export default function Notes({ route, navigation }) {
       <TextInput
         style={styles.titleInput}
         placeholder="Note title..."
+        placeholderTextColor="#999"
         value={currentNoteTitle}
         onChangeText={setCurrentNoteTitle}
       />
@@ -121,6 +103,7 @@ export default function Notes({ route, navigation }) {
         style={styles.noteInput}
         multiline
         placeholder="Start typing your notes here..."
+        placeholderTextColor="#999"
         value={noteContent}
         onChangeText={setNoteContent}
         textAlignVertical="top"
@@ -170,6 +153,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     borderBottomWidth: 1,
     borderBottomColor: "#eee",
+    color: "#333",
   },
   noteInput: {
     flex: 1,
@@ -177,5 +161,6 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     fontSize: 16,
     lineHeight: 24,
+    color: "#333",
   },
 });

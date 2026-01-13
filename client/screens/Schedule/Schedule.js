@@ -12,13 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import CalendarPicker from '../components/CalendarPicker';
 import TimePicker from '../components/TimePicker';
 import NotificationService from '../../services/NotificationService';
-
-// switch url depending on environment
-const API_URL = "http://192.168.1.14:3001/api";
-
-// const API_URL = "http://localhost:3001/api";
-
-// const API_URL = "http://localhost:3001/api";
+import StorageService from '../../services/StorageService';
 
 export default function Schedule({ navigation }) {
   const colorPalette = [
@@ -65,13 +59,7 @@ export default function Schedule({ navigation }) {
 
   const loadSchedule = async () => {
     try {
-      const response = await fetch(`${API_URL}/schedule`, {
-        timeout: 10000,
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
+      const data = await StorageService.getSchedule();
       
       // Build subject colors map first
       const newSubjectColors = {...subjectColors};
@@ -105,7 +93,7 @@ export default function Schedule({ navigation }) {
       setOriginalClasses(updatedClasses);
     } catch (error) {
       console.error("Error loading schedule:", error);
-      setErrorMessage("Failed to connect to server. Check your network connection.");
+      setErrorMessage("Failed to load schedule from storage.");
     }
   };
 
@@ -215,32 +203,14 @@ export default function Schedule({ navigation }) {
     };
 
     try {
-      const url = editingClass ? `${API_URL}/schedule/${editingClass._id}` : `${API_URL}/schedule`;
-      const method = editingClass ? "PUT" : "POST";
-      
-      const response = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(classData),
-        timeout: 10000,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
-      }
-
-      const savedClass = await response.json();
-      
-      // Ensure the saved class has the color property
-      const classWithColor = { ...savedClass, color: subjectColor };
+      let savedClass;
       
       if (editingClass) {
-        setClasses(classes.map((cls) => cls._id === editingClass._id ? classWithColor : cls));
+        savedClass = await StorageService.updateScheduleItem(editingClass._id, classData);
+        setClasses(classes.map((cls) => cls._id === editingClass._id ? savedClass : cls));
       } else {
-        setClasses([...classes, classWithColor]);
+        savedClass = await StorageService.addScheduleItem(classData);
+        setClasses([...classes, savedClass]);
       }
 
       setFormData({
@@ -258,7 +228,7 @@ export default function Schedule({ navigation }) {
       setErrorMessage("");
     } catch (error) {
       console.error("Error saving class:", error);
-      setErrorMessage(error.message || "Failed to connect to server. Check your network connection.");
+      setErrorMessage(error.message || "Failed to save class to storage.");
     }
   };
 
@@ -275,8 +245,18 @@ export default function Schedule({ navigation }) {
 
     // Check if deadline is in the past
     const deadlineDateTime = new Date(reminderData.deadlineDate);
-    const [hours, minutes] = reminderData.deadlineTime.split(':');
-    deadlineDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+    const [time, period] = reminderData.deadlineTime.split(' ');
+    const [hours, minutes] = time.split(':');
+    let hour24 = parseInt(hours);
+    
+    // Convert to 24-hour format
+    if (period === 'PM' && hour24 !== 12) {
+      hour24 += 12;
+    } else if (period === 'AM' && hour24 === 12) {
+      hour24 = 0;
+    }
+    
+    deadlineDateTime.setHours(hour24, parseInt(minutes), 0, 0);
     
     if (deadlineDateTime <= new Date()) {
       setReminderError("Deadline must be in the future");
@@ -286,7 +266,17 @@ export default function Schedule({ navigation }) {
     const notificationIds = [];
     
     for (const day of reminderData.reminderDays) {
-      const [hours, minutes] = reminderData.reminderTime.split(':');
+      const [time, period] = reminderData.reminderTime.split(' ');
+      const [hours, minutes] = time.split(':');
+      let hour24 = parseInt(hours);
+      
+      // Convert to 24-hour format
+      if (period === 'PM' && hour24 !== 12) {
+        hour24 += 12;
+      } else if (period === 'AM' && hour24 === 12) {
+        hour24 = 0;
+      }
+      
       const triggerDate = new Date();
       
       // Find next occurrence of the selected day
@@ -295,12 +285,12 @@ export default function Schedule({ navigation }) {
       let daysUntil = dayIndex - today;
       
       // If the day is today but the time has passed, or if it's in the past, schedule for next week
-      if (daysUntil < 0 || (daysUntil === 0 && new Date().getHours() * 60 + new Date().getMinutes() >= parseInt(hours) * 60 + parseInt(minutes))) {
+      if (daysUntil < 0 || (daysUntil === 0 && new Date().getHours() * 60 + new Date().getMinutes() >= hour24 * 60 + parseInt(minutes))) {
         daysUntil += 7;
       }
       
       triggerDate.setDate(triggerDate.getDate() + daysUntil);
-      triggerDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+      triggerDate.setHours(hour24, parseInt(minutes), 0, 0);
       
       // If deadline is in the future and trigger date is before deadline, schedule it
       const deadlineDateTime = new Date(reminderData.deadlineDate);
@@ -343,15 +333,8 @@ export default function Schedule({ navigation }) {
       }
     }
     
-    // Save reminder to database
+    // Save reminder to storage
     try {
-      // Test immediate notification
-      const testNotificationId = await NotificationService.scheduleReminderNotification(
-        "Test Notification",
-        "This is a test to see if notifications work",
-        new Date(Date.now() + 5000) // 5 seconds from now
-      );
-      
       const reminderPayload = {
         title: reminderData.title,
         deadlineDate: reminderData.deadlineDate.toISOString(),
@@ -362,20 +345,10 @@ export default function Schedule({ navigation }) {
         subject: reminderData.subjectName
       };
 
-      const response = await fetch(`${API_URL}/reminders`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(reminderPayload),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to save reminder: ${response.status}`);
-      }
+      await StorageService.addReminder(reminderPayload);
     } catch (error) {
       console.error("Error saving reminder:", error);
-      setReminderError("Failed to save reminder to database");
+      setReminderError("Failed to save reminder to storage");
       return;
     }
     
@@ -413,11 +386,8 @@ export default function Schedule({ navigation }) {
 
   const handleDeleteClass = async () => {
     try {
-      const response = await fetch(`${API_URL}/schedule/${selectedClass._id}`, {
-        method: "DELETE",
-      });
-
-      if (response.ok) {
+      const success = await StorageService.deleteScheduleItem(selectedClass._id);
+      if (success) {
         setClasses(classes.filter((cls) => cls._id !== selectedClass._id));
         setShowCellModal(false);
         setSelectedClass(null);
@@ -566,6 +536,7 @@ export default function Schedule({ navigation }) {
             <TextInput
               style={styles.input}
               placeholder="Subject Name"
+              placeholderTextColor="#999"
               value={formData.subjectName}
               onChangeText={(text) =>
                 setFormData({ ...formData, subjectName: text })
@@ -575,6 +546,7 @@ export default function Schedule({ navigation }) {
             <TextInput
               style={styles.input}
               placeholder="Instructor Display Name"
+              placeholderTextColor="#999"
               value={formData.instructor}
               onChangeText={(text) =>
                 setFormData({ ...formData, instructor: text })
@@ -617,6 +589,7 @@ export default function Schedule({ navigation }) {
             <TextInput
               style={styles.input}
               placeholder="Room Number"
+              placeholderTextColor="#999"
               value={formData.roomNumber}
               onChangeText={(text) =>
                 setFormData({ ...formData, roomNumber: text })
@@ -891,6 +864,7 @@ export default function Schedule({ navigation }) {
               <TextInput
                 style={styles.input}
                 placeholder="Reminder Title"
+                placeholderTextColor="#999"
                 value={reminderData.title}
                 onChangeText={(text) => setReminderData({...reminderData, title: text})}
               />
@@ -1121,6 +1095,7 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 10,
     borderRadius: 5,
+    color: "#333",
   },
   checkboxContainer: {
     flexDirection: "row",

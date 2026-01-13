@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "1dd16496-4a80-4ebf-abf0-208c6cebac97"
+      }
+    },
+    "android": {
+      "package": "com.lee1plus1.timecraftmern"
+    }
+  }
+}

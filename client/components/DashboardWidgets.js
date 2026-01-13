@@ -2,10 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import axios from 'axios';
 import { useTheme } from '../ThemeContext';
-
-const API_URL = 'http://192.168.1.14:3001/api';
+import StorageService from '../services/StorageService';
 
 export default function DashboardWidgets() {
   const { theme } = useTheme();
@@ -22,18 +20,121 @@ export default function DashboardWidgets() {
   useFocusEffect(
     React.useCallback(() => {
       fetchDashboardData();
+      // Set up interval to refresh data every 30 seconds when screen is focused
+      const interval = setInterval(fetchDashboardData, 30000);
+      return () => clearInterval(interval);
     }, [])
   );
 
   const fetchDashboardData = async () => {
     try {
-      console.log('Fetching dashboard data from:', `${API_URL}/dashboard`);
-      const response = await axios.get(`${API_URL}/dashboard`);
-      console.log('Dashboard data received:', response.data);
-      setDashboardData(response.data);
+      const schedule = await StorageService.getSchedule();
+      const reminders = await StorageService.getReminders();
+      
+      const now = new Date();
+      const currentDay = now.toLocaleDateString('en-US', { weekday: 'short' });
+      const currentTime = now.getHours() * 60 + now.getMinutes();
+      
+      // Find current and next class
+      const todayClasses = schedule.filter(cls => cls.day === currentDay).sort((a, b) => parseTime(a.timeSlots[0]) - parseTime(b.timeSlots[0]));
+      let currentClass = null;
+      let nextClass = null;
+      
+      for (const cls of todayClasses) {
+        const startTime = parseTime(cls.timeSlots[0]);
+        const endTimeSlot = cls.timeSlots[cls.timeSlots.length - 1];
+        const endTime = parseTime(endTimeSlot) + 60; // Add full hour to get actual end time
+        
+        if (currentTime >= startTime && currentTime < endTime) {
+          // Calculate actual end time by adding 1 hour to the last time slot
+          const actualEndTime = addHourToTime(endTimeSlot);
+          currentClass = {
+            name: cls.subjectName,
+            time: `${cls.timeSlots[0]} - ${actualEndTime}`,
+            room: `${cls.roomPrefix} ${cls.roomNumber}`
+          };
+        } else if (startTime > currentTime && !nextClass) {
+          // Calculate actual end time by adding 1 hour to the last time slot
+          const actualEndTime = addHourToTime(endTimeSlot);
+          nextClass = {
+            name: cls.subjectName,
+            time: `${cls.timeSlots[0]} - ${actualEndTime}`,
+            room: `${cls.roomPrefix} ${cls.roomNumber}`
+          };
+        }
+      }
+      
+      // If no next class today, find next class in upcoming days
+      if (!nextClass) {
+        const dayOrder = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const currentDayIndex = dayOrder.indexOf(currentDay);
+        
+        for (let i = 1; i <= 7; i++) {
+          const nextDayIndex = (currentDayIndex + i) % 7;
+          const nextDayName = dayOrder[nextDayIndex];
+          const nextDayClasses = schedule.filter(cls => cls.day === nextDayName).sort((a, b) => parseTime(a.timeSlots[0]) - parseTime(b.timeSlots[0]));
+          
+          if (nextDayClasses.length > 0) {
+            const cls = nextDayClasses[0];
+            const endTimeSlot = cls.timeSlots[cls.timeSlots.length - 1];
+            const actualEndTime = addHourToTime(endTimeSlot);
+            nextClass = {
+              name: cls.subjectName,
+              time: `${cls.timeSlots[0]} - ${actualEndTime}`,
+              room: `${cls.roomPrefix} ${cls.roomNumber}`,
+              day: nextDayName
+            };
+            break;
+          }
+        }
+      }
+      
+      // Format reminders
+      const formattedReminders = reminders.slice(0, 3).map(reminder => ({
+        title: reminder.title,
+        subject: reminder.subject,
+        deadline: new Date(reminder.deadlineDate).toLocaleDateString(),
+        time: reminder.deadlineTime
+      }));
+      
+      setDashboardData({
+        currentClass,
+        nextClass,
+        reminders: formattedReminders
+      });
     } catch (error) {
       console.log('Error fetching dashboard data:', error.message);
     }
+  };
+  
+  const parseTime = (timeStr) => {
+    const [time, period] = timeStr.split(' ');
+    let [hours, minutes] = time.split(':').map(Number);
+    if (period === 'PM' && hours !== 12) hours += 12;
+    if (period === 'AM' && hours === 12) hours = 0;
+    return hours * 60 + (minutes || 0);
+  };
+  
+  const addHourToTime = (timeStr) => {
+    const [time, period] = timeStr.split(' ');
+    let [hours, minutes] = time.split(':').map(Number);
+    
+    // Convert to 24-hour format
+    if (period === 'PM' && hours !== 12) hours += 12;
+    if (period === 'AM' && hours === 12) hours = 0;
+    
+    // Add 1 hour
+    hours += 1;
+    
+    // Convert back to 12-hour format
+    let newPeriod = 'AM';
+    if (hours >= 12) {
+      newPeriod = 'PM';
+      if (hours > 12) hours -= 12;
+    }
+    if (hours === 0) hours = 12;
+    
+    return `${hours}:${minutes.toString().padStart(2, '0')} ${newPeriod}`;
   };
 
   const dynamicStyles = StyleSheet.create({

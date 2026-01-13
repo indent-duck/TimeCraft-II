@@ -2,9 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, FlatList, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import axios from 'axios';
-
-const API_URL = 'http://192.168.1.14:3001/api';
+import StorageService from '../../services/StorageService';
 
 export default function Reminders() {
   const [reminders, setReminders] = useState([]);
@@ -17,8 +15,8 @@ export default function Reminders() {
 
   const fetchReminders = async () => {
     try {
-      const response = await axios.get(`${API_URL}/reminders`);
-      setReminders(response.data);
+      const data = await StorageService.getReminders();
+      setReminders(data);
     } catch (error) {
       console.log('Error fetching reminders:', error.message);
     }
@@ -35,8 +33,10 @@ export default function Reminders() {
           style: 'destructive',
           onPress: async () => {
             try {
-              await axios.delete(`${API_URL}/reminders/${id}`);
-              setReminders(reminders.filter(reminder => reminder._id !== id));
+              const success = await StorageService.deleteReminder(id);
+              if (success) {
+                setReminders(reminders.filter(reminder => reminder._id !== id));
+              }
             } catch (error) {
               console.log('Error deleting reminder:', error.message);
             }

@@ -3,49 +3,41 @@
     "name": "TimeCraft",
     "slug": "timecraft",
     "version": "1.0.0",
-    "orientation": "portrait",
-    "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "platforms": [
+      "android"
+    ],
+    "icon": "./assets/logo.png",
     "splash": {
-      "image": "./assets/splash.png",
+      "image": "./assets/logo.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
-    "ios": {
-      "supportsTablet": true
-    },
     "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      },
+      "package": "com.timecraft.app",
       "permissions": [
-        "android.permission.RECEIVE_BOOT_COMPLETED",
-        "android.permission.VIBRATE",
-        "android.permission.WAKE_LOCK",
         "android.permission.RECEIVE_BOOT_COMPLETED",
         "android.permission.VIBRATE",
         "android.permission.WAKE_LOCK"
       ],
-      "package": "com.anonymous.timecraft"
-    },
-    "web": {
-      "favicon": "./assets/favicon.png"
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/logo.png",
+        "backgroundColor": "#ffffff"
+      }
     },
     "plugins": [
+      "expo-font",
       [
         "expo-notifications",
         {
-          "icon": "./assets/icon.png",
-          "color": "#007AFF",
-          "sounds": ["./assets/notification.wav"],
-          "mode": "production"
+          "icon": "./assets/logo.png",
+          "color": "#007AFF"
         }
-      ],
-      "@react-native-community/datetimepicker"
-    ]
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "d30aa4ca-0dcd-41fe-981e-6c350efa2b08"
+      }
+    }
   }
 }
